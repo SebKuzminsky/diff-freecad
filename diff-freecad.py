@@ -6,6 +6,7 @@ import argparse
 import pathlib
 import sys
 
+import FreeCAD
 import Mesh
 import MeshPart
 import Part
