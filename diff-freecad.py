@@ -1,25 +1,32 @@
 #!/usr/bin/env freecadcmd
 
+"Show a visual diff between two FCStd files."
+
 import argparse
 import pathlib
+import sys
 
 import Mesh
 import MeshPart
 import Part
 
 
-argparser = argparse.ArgumentParser(description=__doc__)
-argparser.add_argument('FCSTD', help="FCStd file to meshify.")
-args = argparser.parse_args()
+def export_bodies(fcstd: pathlib.Path):
+    doc = FreeCAD.openDocument(str(fcstd))
+    mesh_obj = doc.addObject("Mesh::Feature", "Mesh")
+    for obj in doc.Objects:
+        if isinstance(obj, Part.BodyBase):
+            mesh_obj.Mesh = MeshPart.meshFromShape(Shape=obj.Shape, LinearDeflection=0.01)
+            stl_filename = pathlib.Path(f"{fcstd.stem}-{obj.Label}.stl")
+            Mesh.export([mesh_obj], str(stl_filename))
 
-fcstd = pathlib.Path(args.FCSTD)
 
-doc = FreeCAD.openDocument(args.FCSTD)
-mesh_obj = doc.addObject("Mesh::Feature", "Mesh")
+if len(sys.argv) == 2:
+    # One argument, just export the Body objects to STL.
+    fcstd = pathlib.Path(sys.argv[1])
+    export_bodies(fcstd)
 
-for obj in doc.Objects:
-    if obj.TypeId == 'PartDesign::Body':
-        print(f"exporting {obj.Label}")
-        mesh_obj.Mesh = MeshPart.meshFromShape(Shape=obj.Shape, LinearDeflection=0.01)
-        stl_filename = pathlib.Path(f"{fcstd.stem}-{obj.Label}.stl")
-        Mesh.export([mesh_obj], str(stl_filename))
+else:
+    print("usage:")
+    print("    diff-freecad FCSTD                  Export each Body to an STL file.")
+    raise SystemExit("unknown command line arguments")
