@@ -11,13 +11,16 @@ import MeshPart
 import Part
 
 
-def export_bodies(fcstd: pathlib.Path):
+def export_bodies(fcstd: pathlib.Path, dest_dir: pathlib.Path = None):
     doc = FreeCAD.openDocument(str(fcstd))
     mesh_obj = doc.addObject("Mesh::Feature", "Mesh")
     for obj in doc.Objects:
         if isinstance(obj, Part.BodyBase):
             mesh_obj.Mesh = MeshPart.meshFromShape(Shape=obj.Shape, LinearDeflection=0.01)
-            stl_filename = pathlib.Path(f"{fcstd.stem}-{obj.Label}.stl")
+            if dest_dir is None:
+                stl_filename = pathlib.Path(f"{fcstd.stem}-{obj.Label}.stl")
+            else:
+                stl_filename = dest_dir / pathlib.Path(f"{fcstd.stem}-{obj.Label}.stl")
             Mesh.export([mesh_obj], str(stl_filename))
 
 
