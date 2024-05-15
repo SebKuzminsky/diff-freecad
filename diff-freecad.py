@@ -2,7 +2,6 @@
 
 "Show a visual diff between two FCStd files."
 
-import argparse
 import pathlib
 import subprocess
 import sys
@@ -132,24 +131,42 @@ def diff_fcstd(old_fcstd: pathlib.Path, new_fcstd: pathlib.Path):
         else:
             print(f"{new_stl.name} was added in new")
 
-if len(sys.argv) == 2:
+#
+# Debian Bookworm with Python 3.11:
+#     sys.argv=['/home/seb/bin/diff-freecad.py', 'mount.FCStd', '/tmp/git-blob-j4PrAl/mount.FCStd', 'd41e8faebe37808cdfd5fb6a246fa55d7c041677', '100644', '/tmp/git-blob-oDo0Vs/mount.FCStd', 'a06df0ff0d6820643a7c76cfd4a878fddfb59f2b', '100644']
+#     sys.orig_argv=['freecadcmd', '/home/seb/bin/diff-freecad.py', 'mount.FCStd', '/tmp/git-blob-j4PrAl/mount.FCStd', 'd41e8faebe37808cdfd5fb6a246fa55d7c041677', '100644', '/tmp/git-blob-oDo0Vs/mount.FCStd', 'a06df0ff0d6820643a7c76cfd4a878fddfb59f2b', '100644']
+#
+# Ubuntu 22.04 with Python 3.10:
+#     sys.argv=['freecadcmd', '/home/seb/.local/bin/diff-freecad.py', 'mount.FCStd', '/tmp/vFqj42_mount.FCStd', 'a06df0ff0d6820643a7c76cfd4a878fddfb59f2b', '100644', 'mount.FCStd', '0000000000000000000000000000000000000000', '100644']
+#     sys.orig_argv=[]
+#
+# Here we deal with all those options and make `args` into just the
+# arguments *passed to* the script, not including the script name itself
+# or its interpreter or anything like that.
+#
+
+if hasattr(sys, 'orig_argv') and len(sys.orig_argv) == 0:
+    args = sys.argv[2:]
+else:
+    args = sys.argv[1:]
+
+if len(args) == 1:
     # One argument, just export the Body objects to STL.
-    fcstd = pathlib.Path(sys.argv[1])
+    fcstd = pathlib.Path(args[0])
     export_bodies(fcstd)
 
-elif len(sys.argv) == 3:
+elif len(args) == 2:
     # Two arguments, the user is diffing by hand.
-    old_fcstd = pathlib.Path(sys.argv[1])
-    new_fcstd = pathlib.Path(sys.argv[2])
+    old_fcstd = pathlib.Path(args[0])
+    new_fcstd = pathlib.Path(args[1])
     diff_fcstd(old_fcstd, new_fcstd)
 
-elif len(sys.argv) == 8:
+elif len(args) == 7:
     # Seven arguments, the user is diffing using git.  When run from
     # git you get these arguments:
     #     program_name path old-file old-hex old-mode new-file new-hex new-mode
     #
     # [
-    #     '/home/seb/fabrication/bin/diffstl',
     #     'projects/programmable-power-supply/husb238/enclosure/enclosure-lid.stl',
     #     '/tmp/git-blob-Tfsy6e/enclosure-lid.stl',
     #     '85227db0e3a6d77cad95bb2aec1166afdb5af16b',
@@ -158,8 +175,8 @@ elif len(sys.argv) == 8:
     #     '0000000000000000000000000000000000000000',
     #     '100644'
     # ]
-    old_fcstd = pathlib.Path(sys.argv[2])
-    new_fcstd = pathlib.Path(sys.argv[5])
+    old_fcstd = pathlib.Path(args[1])
+    new_fcstd = pathlib.Path(args[4])
     diff_fcstd(old_fcstd, new_fcstd)
 
 else:
