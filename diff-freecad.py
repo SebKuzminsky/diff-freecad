@@ -14,15 +14,32 @@ import Part
 
 
 def export_bodies(fcstd: pathlib.Path, dest_dir: pathlib.Path = None):
+
+    #
+    # Old versions of git (e.g. 2.34.1) give the old blob a funny name,
+    # like '/tmp/OoXezl_myfile.FCStd'.
+    #
+    # New versions of git (e.g. 2.39.2) give the old blob its
+    # usual name and put it in a temporary directory, like
+    # '/tmp/git-blob-REyo8A/myfile.FCStd'.
+    #
+
+    if fcstd.parts[0:2] == ('/', 'tmp') and len(fcstd.parts) == 3:
+      # This filename is like '/tmp/OoXezl_myfile.FCStd', chop off the
+      # stuff up to and including the first '_'.
+      basename = '_'.join(fcstd.stem.split('_')[1:])
+    else:
+      basename = fcstd.stem
+
     doc = FreeCAD.openDocument(str(fcstd))
     mesh_obj = doc.addObject("Mesh::Feature", "Mesh")
     for obj in doc.Objects:
         if isinstance(obj, Part.BodyBase):
             mesh_obj.Mesh = MeshPart.meshFromShape(Shape=obj.Shape, LinearDeflection=0.01)
             if dest_dir is None:
-                stl_filename = pathlib.Path(f"{fcstd.stem}-{obj.Label}.stl")
+                stl_filename = pathlib.Path(f"{basename}-{obj.Label}.stl")
             else:
-                stl_filename = dest_dir / pathlib.Path(f"{fcstd.stem}-{obj.Label}.stl")
+                stl_filename = dest_dir / pathlib.Path(f"{basename}-{obj.Label}.stl")
             Mesh.export([mesh_obj], str(stl_filename))
 
 
