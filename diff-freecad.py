@@ -50,23 +50,22 @@ def diff_stl(old_stl: pathlib.Path, new_stl: pathlib.Path, temp_dir: pathlib.Pat
     deleted_file = temp_dir / "deleted.stl"
     added_file = temp_dir / "added.stl"
 
-    r = subprocess.run(
-        ['stl_boolean', '-a', old_stl, '-b', new_stl, '-i', str(intersection_file)],
-        check=True,
-        capture_output=True
-    )
+    intersection = subprocess.Popen(['stl_boolean', '-a', old_stl, '-b', new_stl, '-i', str(intersection_file)])
+    deleted = subprocess.Popen(['stl_boolean', '-a', old_stl, '-b', new_stl, '-d', str(deleted_file)])
+    added = subprocess.Popen(['stl_boolean', '-a', new_stl, '-b', old_stl, '-d', str(added_file)])
 
-    r = subprocess.run(
-        ['stl_boolean', '-a', old_stl, '-b', new_stl, '-d', str(deleted_file)],
-        check=True,
-        capture_output=True
-    )
+    intersection.wait()
+    if intersection.returncode < 0:
+        raise SystemExit(f"failed to compute old/new intersection: {intersection.stdout=} {intersection.stderr}")
 
-    r = subprocess.run(
-        ['stl_boolean', '-a', new_stl, '-b', old_stl, '-d', str(added_file)],
-        check=True,
-        capture_output=True
-    )
+    deleted.wait()
+    if deleted.returncode < 0:
+        raise SystemExit(f"failed to compute old/new deleted: {deleted.stdout=} {deleted.stderr}")
+
+    added.wait()
+    if added.returncode < 0:
+        raise SystemExit(f"failed to compute old/new added: {added.stdout=} {added.stderr}")
+
 
     old_viewer = subprocess.Popen(
         ['fstl', str(old_stl)],
