@@ -35,7 +35,7 @@ def export_bodies(fcstd: pathlib.Path, dest_dir: pathlib.Path = None):
     mesh_obj = doc.addObject("Mesh::Feature", "Mesh")
     for obj in doc.Objects:
         if isinstance(obj, Part.BodyBase):
-            mesh_obj.Mesh = MeshPart.meshFromShape(Shape=obj.Shape, LinearDeflection=0.01)
+            mesh_obj.Mesh = MeshPart.meshFromShape(Shape=obj.Shape, LinearDeflection=0.1)
             if dest_dir is None:
                 stl_filename = pathlib.Path(f"{basename}-{obj.Label}.stl")
             else:
