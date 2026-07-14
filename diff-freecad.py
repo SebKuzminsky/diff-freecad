@@ -1,16 +1,33 @@
-#!/usr/bin/env freecadcmd
+#!/usr/bin/env python3
 
 "Show a visual diff between two FCStd files."
 
+import glob
 import pathlib
 import subprocess
 import sys
 import tempfile
 
+
+sys.path.append('/usr/lib/freecad-python3/lib')
+
+sys.path.append('/usr/lib/freecad/Mod')
+sys.path.append('/usr/lib/freecad/Ext')
+
+sys.path.append('/usr/share/freecad/Ext')
+sys.path.append('/usr/share/freecad/Mod')
+for m in glob.glob('/usr/share/freecad/Mod/*'):
+    sys.path.append(m)
+
 import FreeCAD
 import Mesh
 import MeshPart
 import Part
+
+# sys.path.append(os.environ['HOME'] + '/.local/share/FreeCAD/Mod')
+# for m in glob.glob(os.environ['HOME'] + '/.local/share/FreeCAD/Mod/*'):
+#     sys.path.append(m)
+# import ThreadProfileCmd
 
 
 def export_bodies(fcstd: pathlib.Path, dest_dir: pathlib.Path = None):
